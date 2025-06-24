@@ -12,8 +12,12 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.zeticai.mlange.feature.objectdetection.ObjectDetection
+import com.zeticai.mlange.feature.objectdetection.yolov8.YOLOResult
 import com.zeticai.mlange.inputsource.camera.CameraSource
 import com.zeticai.mlange.inputsource.camera.PreviewSurfaceView
+import com.zeticai.mlange.inputsource.camera.YOLOResultSurfaceView
+import com.zeticai.mlange.pipeline.ZeticMLangePipeline
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,6 +34,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initYOLO() {
+        val preview = PreviewSurfaceView(this)
+        val result = YOLOResultSurfaceView(this)
+
+        val pipeline = ZeticMLangePipeline(
+            feature = ObjectDetection(this),
+            inputSource = CameraSource(this, preview.holder),
+        )
+
+        findViewById<FrameLayout>(R.id.root).run {
+            addView(preview)
+            addView(result)
+        }
+
+        pipeline.loop {
+            runOnUiThread {
+                result.visualize(YOLOResult(it.value), true)
+            }
+        }
     }
 
     private fun askForPermission() {
